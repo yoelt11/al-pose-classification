@@ -4,6 +4,7 @@ import cv2
 import base64
 import numpy as np 
 import sys
+from datetime import datetime
 
 
 
@@ -11,7 +12,7 @@ async def getImages(websocket):
     print('Server starting: rpi')
     path = "dataset/raw_videos/"
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWwriter(path + 'pose_0.avi', fourcc, 20.0, (640, 480))
+    out = cv2.VideoWwriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 20.0, (640, 480))
     # -- video count
     video_count = 0
     # -- frame count
@@ -28,7 +29,7 @@ async def getImages(websocket):
                 out.write(frame)
                 video_count += 1
                 # -- create new video
-                out = cv2.VideoWwriter(path + 'pose_'+ str(video_count) + '.avi', fourcc, 20.0, (640, 480))
+                out = cv2.VideoWwriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 20.0, (640, 480))
 
             # -- show frame
             cv2.imshow('image-source: Pi', frame)

@@ -12,7 +12,8 @@ async def getImages(websocket):
     print('Server starting: rpi')
     path = "dataset/raw_videos/"
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWwriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 20.0, (640, 480))
+    save_frames = 30
+    out = cv2.VideoWriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 5.0, (640, 360))
     # -- video count
     video_count = 0
     # -- frame count
@@ -23,13 +24,17 @@ async def getImages(websocket):
             frame_count += 1
             # -- decode frame
             frame = cv2.imdecode(np.frombuffer(base64.b64decode(image_bytes), dtype=np.uint8), cv2.IMREAD_COLOR)
-            # -- record every 25 frames
-            if frame_count % 25 == 0:
+            # -- record every 30 frames
+            if frame_count % save_frames == 0:
                 print(f"Recording video: {video_count} - frame: {frame_count}")
-                out.write(frame)
-                video_count += 1
                 # -- create new video
-                out = cv2.VideoWwriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 20.0, (640, 480))
+                frame_dims = frame.shape
+                out = cv2.VideoWriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 5.0, (frame_dims[1], frame_dims[0]))
+                video_count += 1
+                # -- reset frame count
+                frame_count = 0
+            # -- write every other frame
+            out.write(frame)
 
             # -- show frame
             cv2.imshow('image-source: Pi', frame)

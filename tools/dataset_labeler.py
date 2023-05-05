@@ -1,4 +1,4 @@
-import json
+import jsonlines as jsonl
 import cv2
 import numpy as np
 from datetime import datetime
@@ -6,12 +6,17 @@ from datetime import datetime
 if __name__== "__main__":
     # -- dataset to work with
     dataset_path = "./datasets/unlabeled_datasets/"
-    dataset_name = "unlabeled_dataset_1682071747.json"
+    dataset_name = "unlabeled_dataset_1683288890.jsonl"
     # -- output dir
-    output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.json" 
+    output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
     # -- load dataset
-    with open(dataset_path + dataset_name, 'r') as f:
-        dataset = json.load(f)
+    #with open(dataset_path + dataset_name, 'r') as f:
+    #    dataset = json.load(f)
+    dataset = {}
+    with jsonl.open(dataset_path + dataset_name) as reader:
+        for line in reader:
+            dataset.update(line)
+
     print(dataset['props'])
     data = dataset['dataset']
     # -- create labeled dataset
@@ -56,10 +61,13 @@ if __name__== "__main__":
     # -- export dataset
     new_dataset = {'props': dataset['props'], 'dataset': labeled}
 
-    json_str = json.dumps(new_dataset)
+    with jsonl.open(output_dir, 'w') as writer:
+        writer.write(new_dataset)
+    
+    #json_str = json.dumps(new_dataset)
 
-    with open(output_dir, 'w') as f:
-        f.write(json_str)
+    #with open(output_dir, 'w') as f:
+     #   f.write(json_str)
     
         
 

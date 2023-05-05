@@ -1,19 +1,26 @@
 import numpy as np
 import cv2
-import json
+#import json
 from datetime import datetime
 import os
 import multiprocessing
+import sys
+import jsonlines as jsonl
+sys.path.append("../models/")
+from pose_detection.engines import  PoseNet
 
 
 
 def extract_single_video(filepath):
+    # -- load pose engine
+    pose_engine = PoseNet.PoseNet()
     # -- open video
     cap = cv2.VideoCapture(filepath[0])
     # -- get frame interval
     num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     frame_interval = int(num_frames / total_frames)
     frame_container = []
+    kp_container = []
     if frame_interval > 0:
     # -- extract the frames
         for i in range(total_frames):
@@ -23,8 +30,10 @@ def extract_single_video(filepath):
             # -- read the frame from the video
             ret, frame = cap.read()
             if ret == True:
+                keypoints = pose_engine.run(frame)
+                kp_container.append(keypoints.tolist())
                 frame_container.append(frame.tolist())
-    json_array = {"file_name": filepath[1], "data": frame_container}
+    json_array = {"file_name": filepath[1], "data": frame_container, "kp": kp_container}
     return json_array
 
 def get_video_props(file_path, total_frames):
@@ -45,7 +54,7 @@ def get_video_props(file_path, total_frames):
 if __name__== '__main__':
     
     # -- output file
-    output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}.json" 
+    output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
     # -- frames to extract
     total_frames = 20 
     # -- the dictionary
@@ -61,9 +70,11 @@ if __name__== '__main__':
     props = get_video_props(files_fullpath[0][0], total_frames)
     dataset = {"props": props, "dataset": dataset}
     # -- save dataset
-    json_str = json.dumps(dataset)
-    with open(output_dir, 'w') as f:
-        f.write(json_str)
+    with jsonl.open(output_dir, mode='w') as writer:
+        writer.write(dataset)
+    #json_str = json.dumps(dataset)
+    #with open(output_dir, 'w') as f:
+    #    f.write(json_str)
 
 
 

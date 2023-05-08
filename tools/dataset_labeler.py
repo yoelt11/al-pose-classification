@@ -6,7 +6,7 @@ from datetime import datetime
 if __name__== "__main__":
     # -- dataset to work with
     dataset_path = "./datasets/unlabeled_datasets/"
-    dataset_name = "unlabeled_dataset_1683288890.jsonl"
+    dataset_name = "unlabeled_dataset_1683541323.jsonl"
     # -- output dir
     output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
     # -- load dataset
@@ -37,19 +37,21 @@ if __name__== "__main__":
             label = input("Enter a label for video: ")
             match label:
                 case 'sitting':
-                    target = [1,0,0,0,0,0,0]
+                    target = [1,0,0,0,0,0,0,0]
                 case 'standing':
-                    target = [0,1,0,0,0,0,0]
+                    target = [0,1,0,0,0,0,0,0]
                 case 'drinking':
-                    target = [0,0,1,0,0,0,0]
+                    target = [0,0,1,0,0,0,0,0]
                 case 'waving':
-                    target = [0,0,0,1,0,0,0]
+                    target = [0,0,0,1,0,0,0,0]
                 case 'clapping':
-                    target = [0,0,0,0,1,0,0]
+                    target = [0,0,0,0,1,0,0,0]
                 case 'walking':
-                    target = [0,0,0,0,0,1,0]
+                    target = [0,0,0,0,0,1,0,0]
+                case 'picking':
+                    target = [0,0,0,0,0,0,1,0]
                 case 'none':
-                    target = [0,0,0,0,0,0,1]
+                    target = [0,0,0,0,0,0,0.1]
                 case _ :
                     print(f"[Error] No target named {label}")
         # -- append label to new dataset

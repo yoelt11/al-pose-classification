@@ -12,8 +12,8 @@ def load_model(model_id, output_stride=16, model_dir=MODEL_DIR):
     if not os.path.exists(model_path):
         print('Cannot find models file %s, converting from tfjs...' % model_path)
         print(sys.path)
-        sys.path.append("./posenet/converter")
-        from tfjs2pytorch import convert
+        #sys.path.append("./posenet/converter")
+        from ..converter.tfjs2pytorch import convert
         convert(model_id, model_dir, check=False)
         assert os.path.exists(model_path)
 

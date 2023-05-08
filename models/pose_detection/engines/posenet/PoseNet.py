@@ -1,6 +1,6 @@
 import cv2
 import torch
-import posenet
+from . import posenet
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
@@ -54,6 +54,28 @@ class PoseNet():
 
         return output, ref_image
 
+    def plot_thread_run(self, input_queue, response_queue, event):
+        while True:
+            print("--")
+            input_image = input_queue.get()
+            # -- save original copy
+            ref_image = input_image.copy()
+            # -- run inference
+            output = self.run(input_image)
+            # -- plot to image
+            for i in range(output.shape[0]):
+                for j in range(output.shape[1]):
+                    for node in range(output.shape[2]):
+                        if output[i,j,node,2] > self.threshold:
+                            kp_x = output[i,j,node,1]
+                            kp_y = output[i,j,node,0]
+                            ref_image = cv2.circle(ref_image, (int(kp_x), int(kp_y)), radius=5, color=(255,255,0))
+            
+            response_queue.put(ref_image)
+
+            if event.is_set():
+                break
+
     def run(self, input_image):
         """Runs model and returns interpreted network outputs
         Args:
@@ -88,7 +110,7 @@ class PoseNet():
         output_tensor[:,:,:,1] = keypoint_coords[:,:,1]# * 640 # x
         output_tensor[:,:,:,2] = keypoint_scores
 
-        return output_tensor
+        return output_tensor.squeeze()
 
 if __name__=="__main__":
     

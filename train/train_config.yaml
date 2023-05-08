@@ -1,0 +1,24 @@
+
+#---- MODEL PARAMETERS
+MODEL_PARAM: # input in the same order as class initialization
+  BATCH_SIZE: 2
+  TIME_FRAMES: 20
+  KEYPOINTS: 17
+  CHANNEL_IN: 3
+  HEADS: 6
+  LAYERS: 4
+  LAST_MLP: 512
+  CLASSES: 8
+
+#---- MODEL CONFIG
+DS_PATH: '../tools/datasets/labeled_datasets/labeled_dataset_1683542278.jsonl'
+TB_PATH: '../tools/logs/'
+TB_COMMENT: '_our_ds'
+MODEL_OUT_PATH: '../weights/model.pth'
+
+#---- TRAINING PARAMETERS
+TRAIN_PARAM:
+  LEARNING_RATE: .001
+  WEIGHT_DECAY: .0001
+  EPOCHS: 100
+

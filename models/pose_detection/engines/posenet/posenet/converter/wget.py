@@ -3,7 +3,7 @@ import json
 import posixpath
 import os
 
-from posenet import MOBILENET_V1_CHECKPOINTS
+from .. import MOBILENET_V1_CHECKPOINTS
 
 GOOGLE_CLOUD_STORAGE_DIR = 'https://storage.googleapis.com/tfjs-models/weights/posenet/'
 

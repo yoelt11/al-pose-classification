@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from LinearProjection import LinearProjection
+from .LinearProjection import LinearProjection
 
 """
 Code based on: Action Transformer: A Self-Attention Model for Short-Time Pose-Based

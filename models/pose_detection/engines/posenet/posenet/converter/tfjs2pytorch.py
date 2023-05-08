@@ -45,7 +45,7 @@ def load_variables(chkpoint, base_dir=BASE_DIR):
     manifest_path = os.path.join(base_dir, chkpoint, "manifest.json")
     if not os.path.exists(manifest_path):
         print('Weights for checkpoint %s are not downloaded. Downloading to %s ...' % (chkpoint, base_dir))
-        from posenet.converter.wget import download
+        from .wget import download
         download(chkpoint, base_dir)
         assert os.path.exists(manifest_path)
 

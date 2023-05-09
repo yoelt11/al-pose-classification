@@ -62,8 +62,9 @@ if __name__== '__main__':
     # -- create mutiprocessing pool
     pool = multiprocessing.Pool()
     # -- file list
-    files = os.listdir("./datasets/raw_videos/")
-    files_fullpath = [[os.path.join("./datasets/raw_videos/", filename), filename] for filename in files]
+    dir = "./datasets/raw_videos/videos2label"
+    files = os.listdir(dir)
+    files_fullpath = [[os.path.join(dir, filename), filename] for filename in files]
     # -- process data
     dataset = pool.map(extract_single_video, files_fullpath)
     print(np.array(dataset).shape)

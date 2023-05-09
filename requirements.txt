@@ -1,3 +1,7 @@
 opencv-python==4.7.0.68
 websockets==10.4
 torch==2.0.0
+jsonlines==3.1.0
+matplotlib==3.7.1
+tensorboard==2.13.0
+PyYAML==6.0

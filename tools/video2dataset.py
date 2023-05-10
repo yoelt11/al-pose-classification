@@ -73,11 +73,6 @@ if __name__== '__main__':
     # -- save dataset
     with jsonl.open(output_dir, mode='w') as writer:
         writer.write(dataset)
-    #json_str = json.dumps(dataset)
-    #with open(output_dir, 'w') as f:
-    #    f.write(json_str)
-
-
 
 
 

@@ -75,7 +75,7 @@ class AcT(nn.Module):
 
 		enc_out = self.transformer_encoder(lp) # [B, T+1, D_model]
 
-		out =  self.mlp(enc_out[:, 0, :].squeeze())#self.mlp(enc_out[:, 0, :].squeeze())
+		out =  self.mlp(enc_out[:, 0, :].squeeze())
 
 		return out
 

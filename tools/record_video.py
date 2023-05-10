@@ -10,7 +10,7 @@ from datetime import datetime
 
 async def getImages(websocket):
     print('Server starting: rpi')
-    path = "dataset/raw_videos/"
+    path = "dataset/raw_videos/unlabeled_videos/"
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     save_frames = 30
     out = cv2.VideoWriter(path + 'pose_' + str(round(datetime.now().timestamp())) +'.avi', fourcc, 5.0, (640, 360))

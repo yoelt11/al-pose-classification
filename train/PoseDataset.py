@@ -4,7 +4,9 @@ from torch.utils.data import Dataset
 class PoseDataset(Dataset):
     def __init__(self, data, transform=None):
         self.data = data
-        self.transform = transform
+        self.transform = None
+        if transform != None:
+            self.transform = torch.vmap(transform)
 
     def __getitem__(self, index):
         item = self.data[index]

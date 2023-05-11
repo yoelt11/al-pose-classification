@@ -6,6 +6,7 @@ import torch.optim as optim
 import numpy as np
 import jsonlines as jsonl
 from PoseDataset import PoseDataset
+from custom_transforms import kp_norm
 from torch.utils.tensorboard import SummaryWriter
 import os
 sys.path.append("../models/")
@@ -36,9 +37,9 @@ def loadDataset(batch_size, PATH):
     # -- get keypoint data from dataset
     data = dataset['dataset']
     # -- define transformations
-    transform = None
+    transform = kp_norm
     # -- create instance of dataset
-    dataset = PoseDataset(data, transform)
+    dataset = PoseDataset(data)
     # -- split into train / test
     train_proportion = 0.8
     test_proportion = 1 - train_proportion
@@ -56,23 +57,26 @@ def loadDataset(batch_size, PATH):
     return train_loader, test_loader
 
 def evaluate(loader, model, batch_size, step, writer):
-    num_samples = 0
     model.eval() # set model to evaluation mode
-    num_correct = 0
-    with torch.no_grad():
-        for x, y in loader:
-            network_output = model(x)
-            # set y values between 0 and 1
-            _, predictions = network_output.argmax(1)
-            targets = y.argmax(1)
-            num_correct += (predictions == targets).sum()
-            num_samples += batch_size
-    print("[Test] correct predictions: ", num_correct.item())
-    print("[Test] accuracy percentage: ", (num_correct/num_samples).item())
+    num_correct = torch.tensor([0])
+    num_samples = 0
+    # -- check if dataset has more than 0
+    if len(loader) > 0:
+        with torch.no_grad():
+            for x, y in loader:
+                network_output = model(x)
+                # set y values between 0 and 1
+                predictions = network_output.argmax(1)
+                targets = y.argmax(1)
+                num_correct += (predictions == targets).sum()
+                num_samples += batch_size
+        print("[Test] correct predictions: ", num_correct.item())
+        print("[Test] accuracy percentage: ", num_correct.item()/num_samples)
 
-    writer.add_scalar('Test Accuracy:', num_correct.item()/num_samples, global_step=step)
-    
-    step += 1
+        writer.add_scalar('Test Accuracy:', num_correct.item()/num_samples, global_step=step)
+        step += 1
+    else: 
+        print("[Error] More training samples needed")
     
     return step, writer
 
@@ -92,7 +96,7 @@ def train(loader, model, batch_size, step, writer):
         optimizer.step()
 
         # output and write metrics
-        _, predictions = network_output.argmax(1)
+        predictions = network_output.argmax(1)
         targets = y.argmax(1)
         num_correct = (predictions == targets).sum()
         running_train_acc = float(num_correct)/float(x.shape[0])
@@ -110,11 +114,13 @@ def train(loader, model, batch_size, step, writer):
 
 
 if __name__=='__main__':
+    # -- dataset path
+    dataset_path = sys.argv[1]
     # -- load parameters
     parameters = load_yaml()
     batch_size, T, N, C, nhead, num_layer, d_last_mlp, classes = list(parameters['MODEL_PARAM'].values())
     # -- load dataset
-    train_loader, test_loader = loadDataset(batch_size, PATH=parameters['DS_PATH'])
+    train_loader, test_loader = loadDataset(batch_size, PATH=parameters['DS_PATH'] + dataset_path)
     #-- load model
     model = ClassificationModel(B=batch_size, T=T, N=N, C=C, nhead=nhead, num_layer=num_layer, d_last_mlp=d_last_mlp, classes=classes)
     if os.path.isfile("../weights/model.pth"):

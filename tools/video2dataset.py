@@ -52,27 +52,36 @@ def get_video_props(file_path, total_frames):
 
 
 if __name__== '__main__':
-    
-    # -- output file
-    output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
-    # -- frames to extract
-    total_frames = 20 
-    # -- the dictionary
-    entries = {"video_name": "", "data": 0}
-    # -- create mutiprocessing pool
-    pool = multiprocessing.Pool()
-    # -- file list
-    dir = "./datasets/raw_videos/videos2label"
-    files = os.listdir(dir)
-    files_fullpath = [[os.path.join(dir, filename), filename] for filename in files]
-    # -- process data
-    dataset = pool.map(extract_single_video, files_fullpath)
-    print(np.array(dataset).shape)
-    props = get_video_props(files_fullpath[0][0], total_frames)
-    dataset = {"props": props, "dataset": dataset}
-    # -- save dataset
-    with jsonl.open(output_dir, mode='w') as writer:
-        writer.write(dataset)
+    folder_src = None 
+    match sys.argv[1]:
+        case "unlabeled_videos":
+            folder_src = "unlabeled_videos"
+        case "videos2label":
+            folder_src = "videos2label"
+        case _:
+            print("Error: arg options are unlabeled_videos or videos2label")
+
+    if folder_src != None:
+        # -- output file
+        output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
+        # -- frames to extract
+        total_frames = 20 
+        # -- the dictionary
+        entries = {"video_name": "", "data": 0}
+        # -- create mutiprocessing pool
+        pool = multiprocessing.Pool()
+        # -- file list
+        dir = "./datasets/raw_videos/" + folder_src
+        files = os.listdir(dir)
+        files_fullpath = [[os.path.join(dir, filename), filename] for filename in files]
+        # -- process data
+        dataset = pool.map(extract_single_video, files_fullpath)
+        print(np.array(dataset).shape)
+        props = get_video_props(files_fullpath[0][0], total_frames)
+        dataset = {"props": props, "dataset": dataset}
+        # -- save dataset
+        with jsonl.open(output_dir, mode='w') as writer:
+            writer.write(dataset)
 
 
 

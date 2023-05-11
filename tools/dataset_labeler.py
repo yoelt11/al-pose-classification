@@ -2,11 +2,12 @@ import jsonlines as jsonl
 import cv2
 import numpy as np
 from datetime import datetime
+import sys
 
 if __name__== "__main__":
+    dataset_name = sys.argv[1]
     # -- dataset to work with
     dataset_path = "./datasets/unlabeled_datasets/"
-    dataset_name = "unlabeled_dataset_1683541323.jsonl"
     # -- output dir
     output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
     # -- load dataset

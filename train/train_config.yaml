@@ -1,7 +1,7 @@
 
 #---- MODEL PARAMETERS
 MODEL_PARAM: # input in the same order as class initialization
-  BATCH_SIZE: 2
+  BATCH_SIZE: 4
   TIME_FRAMES: 20
   KEYPOINTS: 17
   CHANNEL_IN: 3
@@ -11,7 +11,7 @@ MODEL_PARAM: # input in the same order as class initialization
   CLASSES: 8
 
 #---- MODEL CONFIG
-DS_PATH: '../tools/datasets/labeled_datasets/labeled_dataset_1683542278.jsonl'
+DS_PATH: '../tools/datasets/labeled_datasets/'
 TB_PATH: '../tools/logs/'
 TB_COMMENT: '_our_ds'
 MODEL_OUT_PATH: '../weights/model.pth'

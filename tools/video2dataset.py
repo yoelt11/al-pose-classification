@@ -5,15 +5,17 @@ from datetime import datetime
 import os
 import multiprocessing
 import sys
+import h5py
 import jsonlines as jsonl
 sys.path.append("../models/")
-from pose_detection.engines import  PoseNet
+sys.path.append( "/home/etorres/Documents/github/personal/al-pose-classification/models/pose_detection/engines/yolov7_pose/")
+from pose_detection.engines import YoloV7 as PoseEngine
 
 
 
 def extract_single_video(filepath):
     # -- load pose engine
-    pose_engine = PoseNet.PoseNet()
+    pose_engine = PoseEngine.YoloV7()
     # -- open video
     cap = cv2.VideoCapture(filepath[0])
     # -- get frame interval
@@ -69,7 +71,7 @@ if __name__== '__main__':
         # -- the dictionary
         entries = {"video_name": "", "data": 0}
         # -- create mutiprocessing pool
-        pool = multiprocessing.Pool()
+        pool = multiprocessing.Pool(processes=5)
         # -- file list
         dir = "./datasets/raw_videos/" + folder_src
         files = os.listdir(dir)

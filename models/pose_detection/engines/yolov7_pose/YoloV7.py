@@ -27,8 +27,7 @@ class YoloV7():
 
         print(f"Using device: {self.device}")
         # -- load model
-        print(os.getcwd())
-        weights = torch.load(os.getcwd() + '/engines/yolov7_pose/yolov7-w6-pose.pt', map_location=self.device)
+        weights = torch.load('/home/etorres/Documents/github/personal/al-pose-classification/models/pose_detection/engines/yolov7_pose/yolov7-w6-pose.pt', map_location=self.device)
         self.model = weights['model']
         _ = self.model.float().eval()
         #_ = self.model.half().eval()
@@ -69,33 +68,33 @@ class YoloV7():
         ''' 
             A function that returns both the keypoints and plotted image.
         '''
-         print("--")
-         # -- get image from queue
-         input_image = input_queue.get()
-         if input_image.any() != None:
-             # -- preprocess input
-             resized_img, source_img = self._preprocessImage(input_image)
-             # -- run inference
-             with torch.no_grad():
-                 output, _ = self.model(resized_img)
-             # -- process output
-             output = self._interpret_output(output)
-             # -- if output empty return empty array
-             if torch.tensor(output).dim() > 1:
-                 output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3]
-             else:
-                 output = torch.zeros([17,3])
-             # -- resize keypoints according to image to plot
-             inf_w = resized_img.shape[2]
-             inf_h = resized_img.shape[3]
-             src_w = source_img.shape[2]
-             src_h = source_img.shape[3]
+        print("--")
+        # -- get image from queue
+        input_image = input_queue.get()
+        if input_image.any() != None:
+            # -- preprocess input
+            resized_img, source_img = self._preprocessImage(input_image)
+            # -- run inference
+            with torch.no_grad():
+                output, _ = self.model(resized_img)
+            # -- process output
+            output = self._interpret_output(output)
+            # -- if output empty return empty array
+            if torch.tensor(output).dim() > 1:
+                output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3]
+            else:
+                output = torch.zeros([17,3])
+            # -- resize keypoints according to image to plot
+            inf_w = resized_img.shape[2]
+            inf_h = resized_img.shape[3]
+            src_w = source_img.shape[2]
+            src_h = source_img.shape[3]
 
-             output[:,0] = (output[:,0] / inf_h) * src_h
-             output[:,1] = (output[:,1] / inf_w) * src_w
+            output[:,0] = (output[:,0] / inf_h) * src_h
+            output[:,1] = (output[:,1] / inf_w) * src_w
 
-             # -- plot keypoints to image
-             nimg = self.plot(output, source_img)
+            # -- plot keypoints to image
+            nimg = self.plot(output, source_img)
         return output, ref_image
 
     def plot_thread_run(self, input_queue, response_queue, event):
@@ -151,30 +150,29 @@ class YoloV7():
                 keypoint_edges: connection between keypoints 
                 edge_colors: color for edges 
         '''
-         print("--")
-         # -- get image from queue
-         input_image = input_queue.get()
-         if input_image.any() != None:
-             # -- preprocess input
-             resized_img, source_img = self._preprocessImage(input_image)
-             # -- run inference
-             with torch.no_grad():
-                 output, _ = self.model(resized_img)
-             # -- process output
-             output = self._interpret_output(output)
-             # -- if output empty return empty array
-             if torch.tensor(output).dim() > 1:
-                 output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3]
-             else:
-                 output = torch.zeros([17,3])
-             # -- resize keypoints according to image to plot
-             inf_w = resized_img.shape[2]
-             inf_h = resized_img.shape[3]
-             src_w = source_img.shape[2]
-             src_h = source_img.shape[3]
+        print("--")
+        # -- get image from queue
+        if input_image.any() != None:
+            # -- preprocess input
+            resized_img, source_img = self._preprocessImage(input_image)
+            # -- run inference
+            with torch.no_grad():
+                output, _ = self.model(resized_img)
+            # -- process output
+            output = self._interpret_output(output)
+            # -- if output empty return empty array
+            if torch.tensor(output).dim() > 1:
+                output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3]
+            else:
+                output = torch.zeros([17,3])
+            # -- resize keypoints according to image to plot
+            inf_w = resized_img.shape[2]
+            inf_h = resized_img.shape[3]
+            src_w = source_img.shape[2]
+            src_h = source_img.shape[3]
 
-             output[:,0] = (output[:,0] / inf_h)
-             output[:,1] = (output[:,1] / inf_w)
+            output[:,0] = (output[:,0] / inf_h)
+            output[:,1] = (output[:,1] / inf_w)
 
         return output
 

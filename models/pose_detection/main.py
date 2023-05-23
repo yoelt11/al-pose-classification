@@ -12,7 +12,7 @@ async def imageServer(websocket):
     while True:
         image_bytes = await websocket.recv()
         if image_bytes != None:
-            frame = cv2.imdecode(np.frombuffer(image_bytes, np.unint8), -1)
+            frame = cv2.imdecode(np.frombuffer(base64.b64decode(image_bytes), np.uint8), -1)
             image_queue.put(frame)
             # -- get response
             response = response_queue.get()
@@ -20,6 +20,8 @@ async def imageServer(websocket):
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 event.set()
+                cv2.destroyAllWindows()
+                inference_thread.join()
                 break
 
 
@@ -33,17 +35,16 @@ if __name__ == '__main__':
     response_queue = Queue()
     event = Event()
     # -- load pose engine
-    pose_engine = PoseEngine()
+    pose_engine = PoseEngine.PoseNet()
+
+    # -- inference thread
+    inference_thread = Thread(target=pose_engine.plot_thread_run, args=(image_queue, response_queue, event))
+    inference_thread.start()
 
     # -- run image server
     async def image_server():
-        async with websockets.serve(imageServer, HOST, PORT):
+        async with websockets.serve(imageServer, HOST, PORT, ping_interval=None):
             await asyncio.Future()
 
     asyncio.run(image_server())
-
-    # -- inference thread
-    inference_thread = Thread(target=pose_engine.plot_run, args=(image_queue, response_queue, event))
-    inference_thread.start()
-    
     inference_thread.join()

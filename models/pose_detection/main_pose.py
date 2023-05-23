@@ -2,6 +2,8 @@ import websockets
 import cv2
 import base64
 import sys
+import os
+sys.path.append(os.getcwd() + "/engines/yolov7_pose/")
 import asyncio
 import numpy as np
 from queue import Queue
@@ -36,15 +38,15 @@ if __name__ == '__main__':
     event = Event()
     # -- load pose engine
     pose_engine = PoseEngine.YoloV7()
+
     # -- inference thread
     inference_thread = Thread(target=pose_engine.plot_thread_run, args=(image_queue, response_queue, event))
     inference_thread.start()
+
     # -- run image server
     async def image_server():
-        async with websockets.serve(imageServer, HOST, PORT):
+        async with websockets.serve(imageServer, HOST, PORT, ping_interval=None):
             await asyncio.Future()
 
     asyncio.run(image_server())
-
-    
     inference_thread.join()

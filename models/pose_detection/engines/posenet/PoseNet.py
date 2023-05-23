@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 matplotlib.use('tkagg')
 
+
 class PoseNet():
 
     def __init__(self):
@@ -62,14 +63,13 @@ class PoseNet():
             ref_image = input_image.copy()
             # -- run inference
             output = self.run(input_image)
+            print(output.shape)
             # -- plot to image
-            for i in range(output.shape[0]):
-                for j in range(output.shape[1]):
-                    for node in range(output.shape[2]):
-                        if output[i,j,node,2] > self.threshold:
-                            kp_x = output[i,j,node,1]
-                            kp_y = output[i,j,node,0]
-                            ref_image = cv2.circle(ref_image, (int(kp_x), int(kp_y)), radius=5, color=(255,255,0))
+            for node in range(output.shape[0]):
+                if output[node,2] > self.threshold:
+                    kp_x = output[node,1]
+                    kp_y = output[node,0]
+                    ref_image = cv2.circle(ref_image, (int(kp_x), int(kp_y)), radius=5, color=(255,255,0))
             
             response_queue.put(ref_image)
 

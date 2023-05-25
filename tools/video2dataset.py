@@ -8,14 +8,14 @@ import sys
 import h5py
 import jsonlines as jsonl
 sys.path.append("../models/")
-sys.path.append( "/home/etorres/Documents/github/personal/al-pose-classification/models/pose_detection/engines/yolov7_pose/")
-from pose_detection.engines import YoloV7 as PoseEngine
-
-
+sys.path.append( "../models/pose_detection/engines/yolov7_pose/")
+#from pose_detection.engines import YoloV7 as PoseEngine
+from pose_detection.engines import Movenet as PoseEngine
+import hdf5_utils#save_dict_to_hdf5, load_dict_to_hdf5
 
 def extract_single_video(filepath):
     # -- load pose engine
-    pose_engine = PoseEngine.YoloV7()
+    pose_engine = PoseEngine.Movenet()
     # -- open video
     cap = cv2.VideoCapture(filepath[0])
     # -- get frame interval
@@ -48,30 +48,36 @@ def get_video_props(file_path, total_frames):
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         # -- release video capture
-        cap.release
+        cap.release()
 
         return {"frame_count": frame_count, "fps": fps, "frames_saved": total_frames, "width": width,  "height": height}
 
 
 if __name__== '__main__':
     folder_src = None 
-    match sys.argv[1]:
-        case "unlabeled_videos":
-            folder_src = "unlabeled_videos"
-        case "videos2label":
-            folder_src = "videos2label"
-        case _:
-            print("Error: arg options are unlabeled_videos or videos2label")
+    if sys.argv[1] =="unlabeled_videos":
+        folder_src = "unlabeled_videos"
+    elif sys.argv[1] == "videos2label":
+        folder_src = "videos2label"
+    else:
+        print("Error: arg options are unlabeled_videos or videos2label")
+    # match sys.argv[1]:
+    #     case "unlabeled_videos":
+    #         folder_src = "unlabeled_videos"
+    #     case "videos2label":
+    #         folder_src = "videos2label"
+    #     case _:
+    #         print("Error: arg options are unlabeled_videos or videos2label")
 
     if folder_src != None:
         # -- output file
-        output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
+        output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}" 
         # -- frames to extract
         total_frames = 20 
         # -- the dictionary
         entries = {"video_name": "", "data": 0}
         # -- create mutiprocessing pool
-        pool = multiprocessing.Pool(processes=5)
+        pool = multiprocessing.Pool(processes=1)
         # -- file list
         dir = "./datasets/raw_videos/" + folder_src
         files = os.listdir(dir)
@@ -81,9 +87,14 @@ if __name__== '__main__':
         print(np.array(dataset).shape)
         props = get_video_props(files_fullpath[0][0], total_frames)
         dataset = {"props": props, "dataset": dataset}
-        # -- save dataset
-        with jsonl.open(output_dir, mode='w') as writer:
-            writer.write(dataset)
+        # -- save dataset 
+    with h5py.File(output_dir + '.h5', 'w') as file:
+        group = file.create_group('dictionary')
+
+    # Save the nested dictionary recursively
+    #save_dict_to_hdf5(file, group, data_dict)
+    #    with jsonl.open(output_dir, mode='w') as writer:
+    #        writer.write(dataset)
 
 
 

@@ -13,6 +13,7 @@ from .utils.plots import output_to_keypoint, plot_skeleton_kpts
 import yaml
 import time
 import os
+import urllib.request
 
 class YoloV7():
 
@@ -27,7 +28,22 @@ class YoloV7():
 
         print(f"Using device: {self.device}")
         # -- load model
-        weights = torch.load('/home/etorres/Documents/github/personal/al-pose-classification/models/pose_detection/engines/yolov7_pose/yolov7-w6-pose.pt', map_location=self.device)
+        model_path = "/tmp/models/yolov7-w6-pose.pt"
+        dir = "/tmp/models/"
+
+        if not os.path.exists(dir):
+            # -- create folder
+            print("Directory does not exist -> Creating directory")
+            os.makedirs(dir)
+            # -- download file
+            print("Model does not exist -> downloading file")
+            urllib.request.urlretrieve("https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt", model_path)
+        else:
+            if not os.path.exists(model_path):
+                print("Model does not exist -> downloading file")
+                # -- download file
+                urllib.request.urlretrieve("https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt", model_path)
+        weights = torch.load('/tmp/models/yolov7-w6-pose.pt', map_location=self.device)
         self.model = weights['model']
         _ = self.model.float().eval()
         #_ = self.model.half().eval()
@@ -111,13 +127,15 @@ class YoloV7():
                 # -- preprocess input
                 resized_img, source_img = self._preprocessImage(input_image)
                 # -- run inference
+                start_time = time.perf_counter()
                 with torch.no_grad():
                     output, _ = self.model(resized_img)
+                print(f'Inference time; {time.perf_counter() - start_time}')
                 # -- process output
                 output = self._interpret_output(output)
                 # -- if output empty return empty array
                 if torch.tensor(output).dim() > 1:
-                    output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3]
+                    output = output[0, 7:].T.reshape(17,3) # set [k=17,c=3time.perf_counter() - start_time]
                 else:
                     output = torch.zeros([17,3])
                 # -- resize keypoints according to image to plot

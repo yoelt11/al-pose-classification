@@ -22,7 +22,7 @@ class YoloV7():
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
         elif torch.backends.mps.is_available():
-            self.device = torch.device('mps')
+            self.device = torch.device('cpu') # there is a function in torchvision that is not yet supported: use cpu instead of mps
         else:
             self.device = torch.device('cpu')
 
@@ -60,10 +60,12 @@ class YoloV7():
         source_img = transforms.ToTensor()(source_img)
         source_img = torch.tensor(np.array([source_img.numpy()]))
 
-        if torch.cuda.is_available() or torch.backends.mps.is_available():
+        if torch.cuda.is_available(): 
             resized_img = resized_img.cuda().to(self.device)
-            #resized_img = resized_img.half().cuda().to(self.device)
-            print(resized_img.type())
+        elif torch.backends.mps.is_available():
+            resized_img = resized_img.to(self.device)
+        else:
+            resized_img = resized_img.half().to(self.device)
 
         return resized_img, source_img
 

@@ -5,8 +5,14 @@ import base64
 import numpy as np 
 import sys
 from datetime import datetime
+import os
 
 
+def create_folder_tree():
+    dirs = ["./datasets/raw_videos/unlabeled_videos","./datasets/raw_videos/used_videos", "./datasets/raw_videos/videos2label"]
+    for dir in dirs:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
 async def getImages(websocket):
     print('Server starting: rpi')
@@ -47,6 +53,8 @@ if __name__=='__main__':
     
     PORT = 6000
     HOST = sys.argv[1] #'10.0.0.27'
+    
+    create_folder_tree()
 
     async def server():
         async with websockets.serve(getImages,HOST, PORT, ping_interval=10, ping_timeout=None):

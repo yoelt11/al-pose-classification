@@ -37,7 +37,7 @@ if __name__ == '__main__':
     response_queue = Queue()
     event = Event()
     # -- load pose engine
-    pose_engine = PoseEngine.Movenet()
+    pose_engine = PoseEngine.Engine()
 
     # -- inference thread
     inference_thread = Thread(target=pose_engine.plot_thread_run, args=(image_queue, response_queue, event))

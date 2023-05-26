@@ -9,7 +9,7 @@ from pycoral.adapters import common
 from pycoral.utils.edgetpu import make_interpreter
 import urllib.request
 
-class Movenet():
+class Engine():
 
     def __init__(self):
         # -- set device
@@ -132,7 +132,7 @@ class Movenet():
 if __name__=="__main__":
     
     #-- load model 
-    model = Movenet()
+    model = Engine()
 
     # -- input
     #x = np.random.rand(1, 480,640,3).astype(np.float32)

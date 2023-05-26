@@ -15,7 +15,7 @@ import time
 import os
 import urllib.request
 
-class YoloV7():
+class Engine():
 
     def __init__(self):
         # -- set device

@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('tkagg')
 
 
-class PoseNet():
+class Engine():
 
     def __init__(self):
         self.interpreter = posenet.load_model(101)
@@ -115,7 +115,7 @@ class PoseNet():
 if __name__=="__main__":
     
     #-- load model 
-    model = PoseNet()
+    model = Engine()
 
     # -- input
     #x = np.random.rand(1, 480,640,3).astype(np.float32)

@@ -9,13 +9,18 @@ import h5py
 import jsonlines as jsonl
 sys.path.append("../models/")
 sys.path.append( "../models/pose_detection/engines/yolov7_pose/")
-#from pose_detection.engines import YoloV7 as PoseEngine
-from pose_detection.engines import Movenet as PoseEngine
-import hdf5_utils#save_dict_to_hdf5, load_dict_to_hdf5
+from pose_detection.engines import YoloV7 as PoseEngine
+#from pose_detection.engines import Movenet as PoseEngine
+import hdf5_utils #save_dict_to_hdf5, load_dict_to_hdf5
+
+def create_folder_tree(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
 def extract_single_video(filepath):
+    total_frames = filepath[2]
     # -- load pose engine
-    pose_engine = PoseEngine.Movenet()
+    pose_engine = PoseEngine.Engine()
     # -- open video
     cap = cv2.VideoCapture(filepath[0])
     # -- get frame interval
@@ -24,6 +29,7 @@ def extract_single_video(filepath):
     frame_container = []
     kp_container = []
     if frame_interval > 0:
+        print(f"processing: ", filepath[1])
     # -- extract the frames
         for i in range(total_frames):
             frame_num = i * frame_interval
@@ -61,32 +67,30 @@ if __name__== '__main__':
         folder_src = "videos2label"
     else:
         print("Error: arg options are unlabeled_videos or videos2label")
-    # match sys.argv[1]:
-    #     case "unlabeled_videos":
-    #         folder_src = "unlabeled_videos"
-    #     case "videos2label":
-    #         folder_src = "videos2label"
-    #     case _:
-    #         print("Error: arg options are unlabeled_videos or videos2label")
 
     if folder_src != None:
+        # -- check if output folder exists or create
+        create_folder_tree("./datasets/unlabeled_datasets/")
         # -- output file
-        output_dir = f"./datasets/unlabeled_datasets/unlabeled_dataset_{str(round(datetime.now().timestamp()))}" 
+        output_dir = "./datasets/unlabeled_datasets/" + folder_src + str(round(datetime.now().timestamp())) 
         # -- frames to extract
         total_frames = 20 
         # -- the dictionary
         entries = {"video_name": "", "data": 0}
         # -- create mutiprocessing pool
-        pool = multiprocessing.Pool(processes=1)
+        pool = multiprocessing.Pool(processes=16)
         # -- file list
         dir = "./datasets/raw_videos/" + folder_src
         files = os.listdir(dir)
-        files_fullpath = [[os.path.join(dir, filename), filename] for filename in files]
+        files_fullpath = [[os.path.join(dir, filename), filename, total_frames] for filename in files]
         # -- process data
         dataset = pool.map(extract_single_video, files_fullpath)
-        print(np.array(dataset).shape)
+        # -- merge to global dataset
+        print(f"The final dataset shape: {np.array(dataset).shape}")
         props = get_video_props(files_fullpath[0][0], total_frames)
         dataset = {"props": props, "dataset": dataset}
+        # -- close pool
+        pool.close()
         # -- save dataset 
     with h5py.File(output_dir + '.h5', 'w') as file:
         group = file.create_group('dictionary')

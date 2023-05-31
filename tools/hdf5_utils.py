@@ -2,65 +2,91 @@
 import h5py
 
 # Helper function to recursively save nested dictionaries
-def save_dict_to_hdf5(file, parent_group, dictionary):
-    for key, value in dictionary.items():
-        if isinstance(value, dict):
-            # Create a subgroup for nested dictionaries
-            subgroup = parent_group.create_group(key)
-            save_dict_to_hdf5(file, subgroup, value)
-        else:
-            # Save leaf nodes as datasets
-            parent_group.create_dataset(key, data=value)
+def save_dict_to_hdf5(output_dir, dictionary):
+    print("-- creating dataset -- ")
+    #print(dictionary.keys())
+    # -- open new file
+    with h5py.File(output_dir + ".h5", 'w') as f:
+        # -- create groups
+        dataset_props = f.create_group('props')
+        dataset = f.create_group('dataset')
+        # -- populate properties
+        for key in dictionary["props"]:
+            dataset_props[key] = dictionary['props'][key]
+
+        for i, entry in enumerate(dictionary["dataset"]):
+            if isinstance(entry, dict):
+                print(f"saving {entry['file_name']}, img_data shape: {entry['img_data'].shape}, kp_data shape: {entry['kp_data'].shape}")
+                if i == 0:
+                    # -- creates first entry
+                    for key in entry:
+                        if isinstance(entry[key], str):
+                            dataset.create_dataset(key, 
+                                                    data=[entry[key]],
+                                                    chunks=True,
+                                                    maxshape=(None,))
+                        else:
+                            data_shape = list(entry[key].shape)
+                            data_shape[0] = None
+                            data_shape = tuple(data_shape)
+                            dataset.create_dataset(key, 
+                                                    data=entry[key],
+                                                    chunks=True,
+                                                    maxshape=data_shape)
+                else:
+                    # -- expands dataset
+                    for key in entry:
+                        dataset[key].resize(dataset[key].shape[0] + 1, axis=0)
+                        dataset[key][-1] = entry[key]
+
+        f.close() # save file
 
 # Helper function to recursively load nested dictionaries
-def load_dict_from_hdf5(group):
-    dictionary = {}
-    for key in group.keys():
-        if isinstance(group[key], h5py.Group):
-            # Load subgroup as a nested dictionary
-            dictionary[key] = load_dict_from_hdf5(group[key])
-        else:
-            # Load dataset as a leaf node
-            dictionary[key] = group[key][()]
-    return dictionary
+def load_from_hdf5(path):
+    print("-- loading dataset --")
+    with h5py.File(path, 'r+') as f:
+        dataset = f['dataset']
+
+        img_data = dataset['img_data'][()]
+        kp_data = dataset['kp_data'][()]
+        file_name = dataset['file_name'][()]
+
+        dataset_props = f['props']
+        prop_keys, prop_val = [], []
+        for key in dataset_props:
+            prop_keys.append(key)
+            prop_val.append(dataset_props[key][()])
+        dataset_props = dict(zip(prop_keys, prop_val))
+        #f.close()
+        return dataset_props, img_data, kp_data, file_name
+
 
 if __name__=='__main__':
+    import numpy as np
+    from datetime import datetime
     # -- create dummy dict
+    output_dir = "./datasets/unlabeled_datasets/" + "test" + str(round(datetime.now().timestamp())) 
     # Create a nested dictionary
-    value1 = 0
-    value2 = 0
-    value3 = 0
-    value4 = 0
 
-    data_dict = {
-        'key1': value1,
-        'key2': {
-            'subkey1': value2,
-            'subkey2': value3,
+    data = []
+    for i in range(500):
+        d = {
+            "img_data": np.random.rand(1,20,480,360,3).astype(dtype=np.uint8),
+            "kp_data":  np.random.rand(1,20,17,3).astype(np.float64),
+            "file_name": "file_1.txt"
+            }
+        data.append(d)
+
+    dictionary = {
+        "props": {
+            "frame_count": 100,
+            "fps": 30,
+            "total_frames": 500,
+            "width": 640,
+            "height": 480
         },
-        'key3': {
-            'subkey3': {
-                'subsubkey1': value4,
-            },
-        },
-        # ...
+        "dataset": data
     }
-    # -- save
-    # Open an HDF5 file in write mode
-    with h5py.File('data.h5', 'w') as file:
-        # Create a group to store the dictionary
-        group = file.create_group('dictionary')
     
-        # Save the nested dictionary recursively
-        save_dict_to_hdf5(file, group, data_dict)
-
-    # -- load
-    # Open the HDF5 file in read mode
-    with h5py.File('data.h5', 'r') as file:
-        # Access the dictionary group
-        group = file['dictionary']
-    
-        # Load the nested dictionary recursively
-        loaded_dict = load_dict_from_hdf5(group)
-    
-    print(loaded_dict)
+    save_dict_to_hdf5(output_dir, dictionary)
+    dataset_props, dataset = load_dict_from_hdf5(output_dir + '.h5') 

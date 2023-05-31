@@ -3,20 +3,31 @@ import cv2
 import numpy as np
 from datetime import datetime
 import sys
+from hdf5_utils import load_dict_from_hdf5
+import os
+import h5py
+
+def create_folder_tree(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
 if __name__== "__main__":
     dataset_name = sys.argv[1]
     # -- dataset to work with
     dataset_path = "./datasets/unlabeled_datasets/"
     # -- output dir
+    create_folder_tree("./datasets/labeled_datasets/")
     output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
-    # -- load dataset
-    #with open(dataset_path + dataset_name, 'r') as f:
-    #    dataset = json.load(f)
-    dataset = {}
-    with jsonl.open(dataset_path + dataset_name) as reader:
-        for line in reader:
-            dataset.update(line)
+
+
+    with h5py.File(dataset_path + dataset_name, 'r') as file:
+        # Access the dictionary group
+        group = file['dictionary']
+        dataset = load_dict_from_hdf5(group)
+    print(dataset)
+    #with jsonl.open(dataset_path + dataset_name) as reader:
+    #    for line in reader:
+    #        dataset.update(line)
 
     print(dataset['props'])
     data = dataset['dataset']

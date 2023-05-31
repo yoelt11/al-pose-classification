@@ -28,6 +28,15 @@ class Engine():
 
         print(f"Using device: {self.device}")
         # -- load model
+        self.download_model()
+        weights = torch.load('/tmp/models/yolov7-w6-pose.pt', map_location=self.device)
+        self.model = weights['model']
+        _ = self.model.float().eval()
+        #_ = self.model.half().eval()
+
+        self.threshold = 0.55
+    
+    def download_model(self):
         model_path = "/tmp/models/yolov7-w6-pose.pt"
         dir = "/tmp/models/"
 
@@ -43,12 +52,7 @@ class Engine():
                 print("Model does not exist -> downloading file")
                 # -- download file
                 urllib.request.urlretrieve("https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt", model_path)
-        weights = torch.load('/tmp/models/yolov7-w6-pose.pt', map_location=self.device)
-        self.model = weights['model']
-        _ = self.model.float().eval()
-        #_ = self.model.half().eval()
 
-        self.threshold = 0.55
 
     def _preprocessImage(self, source_img):
         # sizes 192, 384, 649, 960
@@ -86,7 +90,6 @@ class Engine():
         ''' 
             A function that returns both the keypoints and plotted image.
         '''
-        print("--")
         # -- get image from queue
         input_image = input_queue.get()
         if input_image.any() != None:
@@ -103,13 +106,16 @@ class Engine():
             else:
                 output = torch.zeros([17,3])
             # -- resize keypoints according to image to plot
-            inf_w = resized_img.shape[2]
-            inf_h = resized_img.shape[3]
-            src_w = source_img.shape[2]
-            src_h = source_img.shape[3]
+            offset_y = -10
+                
+            inf_h = resized_img.shape[2]
+            inf_w = resized_img.shape[3]
+            src_h = source_img.shape[2]
+            src_w = source_img.shape[3]
 
-            output[:,0] = (output[:,0] / inf_h) * src_h
-            output[:,1] = (output[:,1] / inf_w) * src_w
+            output[:,0] = ((output[:,0] / inf_w) * src_w) 
+            output[:,1] = ((output[:,1] / inf_h) * src_h) + offset_y
+
 
             # -- plot keypoints to image
             nimg = self.plot(output, source_img)
@@ -122,7 +128,6 @@ class Engine():
         '''
 
         while True:
-            print("--")
             # -- get image from queue
             input_image = input_queue.get()
             if input_image.any() != None:
@@ -141,13 +146,15 @@ class Engine():
                 else:
                     output = torch.zeros([17,3])
                 # -- resize keypoints according to image to plot
-                inf_w = resized_img.shape[2]
-                inf_h = resized_img.shape[3]
-                src_w = source_img.shape[2]
-                src_h = source_img.shape[3]
+                offset_y = -10
+                
+                inf_h = resized_img.shape[2]
+                inf_w = resized_img.shape[3]
+                src_h = source_img.shape[2]
+                src_w = source_img.shape[3]
 
-                output[:,0] = (output[:,0] / inf_h) * src_h
-                output[:,1] = (output[:,1] / inf_w) * src_w
+                output[:,0] = ((output[:,0] / inf_w) * src_w) 
+                output[:,1] = ((output[:,1] / inf_h) * src_h) + offset_y
 
                 # -- plot keypoints to image
                 nimg = self.plot(output, source_img)
@@ -170,7 +177,6 @@ class Engine():
                 keypoint_edges: connection between keypoints 
                 edge_colors: color for edges 
         '''
-        print("--")
         # -- get image from queue
         if input_image.any() != None:
             # -- preprocess input
@@ -186,13 +192,15 @@ class Engine():
             else:
                 output = torch.zeros([17,3])
             # -- resize keypoints according to image to plot
-            inf_w = resized_img.shape[2]
-            inf_h = resized_img.shape[3]
-            src_w = source_img.shape[2]
-            src_h = source_img.shape[3]
+            offset_y = -10
+                
+            inf_h = resized_img.shape[2]
+            inf_w = resized_img.shape[3]
+            src_h = source_img.shape[2]
+            src_w = source_img.shape[3]
 
-            output[:,0] = (output[:,0] / inf_h)
-            output[:,1] = (output[:,1] / inf_w)
+            output[:,0] = (output[:,0] / inf_w) 
+            output[:,1] = (((output[:,1] / inf_h) * src_h) + offset_y) / src_h
 
         return output
 

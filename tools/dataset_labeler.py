@@ -1,9 +1,8 @@
-import jsonlines as jsonl
 import cv2
 import numpy as np
 from datetime import datetime
 import sys
-from hdf5_utils import load_dict_from_hdf5
+from hdf5_utils import load_from_hdf5, save_dict_to_hdf5 
 import os
 import h5py
 
@@ -17,25 +16,19 @@ if __name__== "__main__":
     dataset_path = "./datasets/unlabeled_datasets/"
     # -- output dir
     create_folder_tree("./datasets/labeled_datasets/")
-    output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}.jsonl" 
+    output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}" 
 
-
-    with h5py.File(dataset_path + dataset_name, 'r') as file:
-        # Access the dictionary group
-        group = file['dictionary']
-        dataset = load_dict_from_hdf5(group)
-    print(dataset)
-    #with jsonl.open(dataset_path + dataset_name) as reader:
-    #    for line in reader:
-    #        dataset.update(line)
-
-    print(dataset['props'])
-    data = dataset['dataset']
+    dataset_props, img_data, kp_data, file_name = load_from_hdf5(dataset_path +  dataset_name)
+    img_data = img_data[:5]
+    kp_data = kp_data[:5]
+    file_name = file_name[:5]
+    num_vids = img_data.shape[0]
     # -- create labeled dataset
-    labeled = []
-    for video in data:
-        video_name = video["file_name"]
-        frames = video["data"]
+    dataset = []
+    for v in range(num_vids):
+        video_name = file_name[v]
+        print(str(video_name))
+        frames = img_data[v]
         label = ""
         target = None
         # -- keep playing video as long as label is empty
@@ -67,16 +60,16 @@ if __name__== "__main__":
                 case _ :
                     print(f"[Error] No target named {label}")
         # -- append label to new dataset
-        video['label'] = label
-        video['target'] = target
-        labeled.append(video)
+        dataset.append({'img_data': np.expand_dims(img_data[v], axis=0), "kp_data": np.expand_dims(kp_data[v], axis=0), "file_name": file_name[v], "target": np.expand_dims(np.array(target), axis=0)})
         # -- destroy current video window
         cv2.destroyWindow(video_name)
     # -- export dataset
-    new_dataset = {'props': dataset['props'], 'dataset': labeled}
+    new_dataset = {'props': dataset_props, 'dataset': dataset}
 
-    with jsonl.open(output_dir, 'w') as writer:
-        writer.write(new_dataset)
+    save_dict_to_hdf5(output_dir, new_dataset)
+
+    #with jsonl.open(output_dir, 'w') as writer:
+    #    writer.write(new_dataset)
     
     #json_str = json.dumps(new_dataset)
 

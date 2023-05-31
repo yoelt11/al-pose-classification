@@ -46,19 +46,35 @@ def load_from_hdf5(path):
     print("-- loading dataset --")
     with h5py.File(path, 'r+') as f:
         dataset = f['dataset']
+        dataset_keys = [key for key in dataset.keys()]
+        print(dataset_keys)
+        if 'target' in dataset_keys:
+            img_data = dataset['img_data'][()]
+            kp_data = dataset['kp_data'][()]
+            file_name = dataset['file_name'][()]
+            file_name = [f.decode("utf-8") for f in file_name]
+            targets = dataset['target'][()]
 
-        img_data = dataset['img_data'][()]
-        kp_data = dataset['kp_data'][()]
-        file_name = dataset['file_name'][()]
+            dataset_props = f['props']
+            prop_keys, prop_val = [], []
+            for key in dataset_props:
+                prop_keys.append(key)
+                prop_val.append(dataset_props[key][()])
+            dataset_props = dict(zip(prop_keys, prop_val))
+            return dataset_props, img_data, kp_data, file_name, targets
+        else:
+            img_data = dataset['img_data'][()]
+            kp_data = dataset['kp_data'][()]
+            file_name = dataset['file_name'][()]
+            file_name = [f.decode("utf-8") for f in file_name]
 
-        dataset_props = f['props']
-        prop_keys, prop_val = [], []
-        for key in dataset_props:
-            prop_keys.append(key)
-            prop_val.append(dataset_props[key][()])
-        dataset_props = dict(zip(prop_keys, prop_val))
-        #f.close()
-        return dataset_props, img_data, kp_data, file_name
+            dataset_props = f['props']
+            prop_keys, prop_val = [], []
+            for key in dataset_props:
+                prop_keys.append(key)
+                prop_val.append(dataset_props[key][()])
+            dataset_props = dict(zip(prop_keys, prop_val))
+            return dataset_props, img_data, kp_data, file_name
 
 
 if __name__=='__main__':

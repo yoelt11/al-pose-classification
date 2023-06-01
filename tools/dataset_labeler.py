@@ -5,6 +5,7 @@ import sys
 from hdf5_utils import load_from_hdf5, save_dict_to_hdf5 
 import os
 import h5py
+import time
 
 def create_folder_tree(dir):
     if not os.path.exists(dir):
@@ -19,9 +20,9 @@ if __name__== "__main__":
     output_dir = f"./datasets/labeled_datasets/labeled_dataset_{str(round(datetime.now().timestamp()))}" 
 
     dataset_props, img_data, kp_data, file_name = load_from_hdf5(dataset_path +  dataset_name)
-    img_data = img_data[:5]
-    kp_data = kp_data[:5]
-    file_name = file_name[:5]
+    img_data = img_data
+    kp_data = kp_data
+    file_name = file_name
     num_vids = img_data.shape[0]
     # -- create labeled dataset
     dataset = []
@@ -36,6 +37,7 @@ if __name__== "__main__":
             for frame in frames:
                 frame = np.array(frame, np.uint8) 
                 cv2.imshow(video_name, frame)
+                time.sleep(.08)
                 # -- break feed
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -57,10 +59,19 @@ if __name__== "__main__":
                     target = [0,0,0,0,0,0,1,0]
                 case 'none':
                     target = [0,0,0,0,0,0,0.1]
+                case 'skip':
+                    print("[Warning] Video skipped")
+                    break
+                case 'quit':
+                    break
                 case _ :
                     print(f"[Error] No target named {label}")
         # -- append label to new dataset
-        dataset.append({'img_data': np.expand_dims(img_data[v], axis=0), "kp_data": np.expand_dims(kp_data[v], axis=0), "file_name": file_name[v], "target": np.expand_dims(np.array(target), axis=0)})
+        if label != "skip" and label != "quit":
+            print("[Info] Entry added successfully")
+            dataset.append({'img_data': np.expand_dims(img_data[v], axis=0), "kp_data": np.expand_dims(kp_data[v], axis=0), "file_name": file_name[v], "target": np.expand_dims(np.array(target), axis=0)})
+        if label == "quit":
+            break
         # -- destroy current video window
         cv2.destroyWindow(video_name)
     # -- export dataset

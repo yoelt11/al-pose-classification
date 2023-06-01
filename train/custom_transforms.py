@@ -8,13 +8,14 @@ def kp_norm(pose):
     body_kp = [5,6,11,12]
     body_coords = pose[body_kp,:2]
     body_coords = body_coords.T
-    x = body_coords[1].mean()
-    y = body_coords[0].mean()
+    x = body_coords[0].mean()
+    y = body_coords[1].mean()
     pose = pose.T
-    print(pose[0].shape)
+    print(pose.shape)
     print(x)
-    pose[1] = (pose[1] - x) / 640
-    pose[0] = (pose[0] - y) / 360
+    pose[0] = pose[0] - x #/ 640
+    pose[1] = pose[1] - y #/ 360
+    print(pose[0])
     
     return pose.T
     

@@ -52,7 +52,7 @@ async def getImages(websocket):
 if __name__=='__main__':
     
     PORT = 6000
-    HOST = sys.argv[1] #'10.0.0.27'
+    HOST = '0.0.0.0' #sys.argv[1] #'10.0.0.27'
     
     create_folder_tree()
 

@@ -105,4 +105,4 @@ if __name__=='__main__':
     }
     
     save_dict_to_hdf5(output_dir, dictionary)
-    dataset_props, dataset = load_dict_from_hdf5(output_dir + '.h5') 
+    dataset_props, img_data, kp_data, file_name = load_from_hdf5(output_dir + '.h5') 

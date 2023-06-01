@@ -10,6 +10,8 @@ from custom_transforms import kp_norm
 from torch.utils.tensorboard import SummaryWriter
 import os
 sys.path.append("../models/")
+sys.path.append("../tools/")
+from hdf5_utils import load_from_hdf5
 from pose_classification.AcT import AcT as ClassificationModel
 import yaml
 import torch.multiprocessing
@@ -26,20 +28,15 @@ def load_yaml(PATH='./train_config.yaml'):
 
 def loadDataset(batch_size, PATH):
     # -- load your custom dataset from the .jsonl file
-    dataset = {}
-    with jsonl.open(PATH) as reader:
-        for line in reader:
-            dataset.update(line)
+    dataset_props, _, data, _, targets = load_from_hdf5(PATH)
     # -- load dataset properties
-    T = dataset['props']['frames_saved'] # the number of frames
-    video_height = dataset['props']['height']
-    video_width = dataset['props']['width']
-    # -- get keypoint data from dataset
-    data = dataset['dataset']
+    T = dataset_props['frames_saved'] 
+    video_height = dataset_props['height'] 
+    video_width = dataset_props['width'] 
     # -- define transformations
     transform = kp_norm
     # -- create instance of dataset
-    dataset = PoseDataset(data)
+    dataset = PoseDataset(data, targets, transform)
     # -- split into train / test
     train_proportion = 0.8
     test_proportion = 1 - train_proportion
@@ -91,7 +88,8 @@ def train(loader, model, batch_size, step, writer):
         network_output = model(x) # predict
 
         # set y values between 0 and 1
-        loss = loss_fn(network_output, y.argmax(1))
+        loss = loss_fn(network_output, y.argmax(1)) # CrossEntropyLoss()
+        #loss = loss_fn(network_output, y.argmax(1)) # Nllloss()
         loss.backward()
         optimizer.step()
 
@@ -101,7 +99,7 @@ def train(loader, model, batch_size, step, writer):
         num_correct = (predictions == targets).sum()
         running_train_acc = float(num_correct)/float(x.shape[0])
         if i % 25 == 0:
-            print("[training] Loss: ", loss.item())
+            print("[Train] Loss: ", loss.item())
 
         # update tensorboard
         writer.add_scalar('Training Loss', loss, global_step=step)
@@ -130,7 +128,8 @@ if __name__=='__main__':
     else:
         print("no pretrained model found in directory")
     # -- train parameters
-    loss_fn = nn.NLLLoss()
+    #loss_fn = nn.NLLLoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), 
             lr=parameters['TRAIN_PARAM']['LEARNING_RATE'],
             weight_decay=parameters['TRAIN_PARAM']['WEIGHT_DECAY'])
@@ -142,7 +141,7 @@ if __name__=='__main__':
     test_step = 0
 
     for epoch in range(num_epochs):
-        print(f'Epoch: {epoch}')
+        print(f'\nEpoch: {epoch}')
         # -- train step
         train_step, writer = train(train_loader, model, batch_size, train_step, writer)
         # -- test step

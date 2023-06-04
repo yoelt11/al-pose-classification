@@ -58,7 +58,7 @@ if __name__== "__main__":
                 case 'picking':
                     target = [0,0,0,0,0,0,1,0]
                 case 'none':
-                    target = [0,0,0,0,0,0,0.1]
+                    target = [0,0,0,0,0,0,0,1]
                 case 'skip':
                     print("[Warning] Video skipped")
                     break

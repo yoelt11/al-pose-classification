@@ -6,12 +6,15 @@ import os
 import numpy as np
 import jsonlines as jsonl
 sys.path.append("../train/")
-from PoseDatasetUnlabeled import PoseDataset
+#from PoseDatasetUnlabeled import PoseDataset
+from PoseDataset import PoseDataset
 from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 import yaml
 sys.path.append("../models/")
 from pose_classification.AcT import AcT as ClassificationModel
+from custom_transforms import kp_norm
+from hdf5_utils import load_from_hdf5
 
 def load_yaml(PATH='../train/train_config.yaml'):
     """
@@ -23,24 +26,20 @@ def load_yaml(PATH='../train/train_config.yaml'):
     return dictionary 
 
 def loadDataset(batch_size, PATH):
-    # -- load your custom dataset from the .jsonl file
-    dataset = {}
-    with jsonl.open(PATH) as reader:
-        for line in reader:
-            dataset.update(line)
+    # -- load your custo65ataset from the .jsonl file
+    dataset_props, _, data, filename = load_from_hdf5(PATH)
     # -- load dataset properties
-    T = dataset['props']['frames_saved'] # the number of frames
-    video_height = dataset['props']['height']
-    video_width = dataset['props']['width']
-    # -- get keypoint data from dataset
-    data = dataset['dataset']
-    labels = ['sitting', 'standing', 'drinking', 'waving', 'clapping', 'walking', 'picking', 'none']
+    T = dataset_props['frames_saved'] 
+    video_height = dataset_props['height'] 
+    video_width = dataset_props['width'] 
     # -- define transformations
-    transform = None
+    transform = kp_norm
     # -- create instance of dataset
-    dataset = PoseDataset(data, transform)
-
+    dataset = PoseDataset(data, filename, transform)
+    
     test_loader = DataLoader(dataset=dataset, batch_size=batch_size, pin_memory=True, num_workers=4, drop_last=True)
+
+    labels = ['sitting', 'standing', 'drinking', 'waving', 'clapping', 'walking', 'picking', 'none']
 
     return test_loader, labels
 
@@ -53,10 +52,11 @@ def evaluate(loader, model):
             # set y values between 0 and 1
             predictions = network_output.argmax().item()
             max_score = torch.exp(network_output).max().item()
-            if max_score < 0.70:
+            if max_score < 0.85: # important variable, must increase as model gets more confident
+                print(filename)
                 low_conf_vids.append(filename[0])
             video_count += 1
-    print("overal score: ", len(low_conf_vids)/ video_count)
+    print("overal score: ", (video_count - len(low_conf_vids))/ video_count)
     return low_conf_vids
 
 def update_directories(low_conf_videos):
@@ -96,7 +96,7 @@ if __name__=="__main__":
     batch_size, T, N, C, nhead, num_layer, d_last_mlp, classes = list(parameters['MODEL_PARAM'].values())
     batch_size = 1 # process one item at a time
     # -- load dataset
-    test_loader, labels = loadDataset(batch_size, PATH=file_path)
+    test_loader, labels = loadDataset(batch_size, PATH="./datasets/unlabeled_datasets/" + file_path)
     # -- load model
     model = ClassificationModel(B=batch_size, T=T, N=N, C=C, nhead=nhead, num_layer=num_layer, d_last_mlp=d_last_mlp, classes=classes)
     if os.path.isfile("../weights/model.pth"):

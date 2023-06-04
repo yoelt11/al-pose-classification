@@ -4,7 +4,6 @@ from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 import sys
 import torch.optim as optim
 import numpy as np
-import jsonlines as jsonl
 from PoseDataset import PoseDataset
 from custom_transforms import kp_norm
 from torch.utils.tensorboard import SummaryWriter
@@ -16,6 +15,7 @@ from pose_classification.AcT import AcT as ClassificationModel
 import yaml
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
+from datetime import datetime
 
 def load_yaml(PATH='./train_config.yaml'):
     """
@@ -84,18 +84,17 @@ def train(loader, model, batch_size, step, writer):
 
         for param in model.parameters(): # Set grad to zero
             param.grad = None
-
         network_output = model(x) # predict
-
+        targets = y.max(1)[1]
         # set y values between 0 and 1
-        loss = loss_fn(network_output, y.argmax(1)) # CrossEntropyLoss()
+        #loss = loss_fn(network_output, y.argmax(1)) # CrossEntropyLoss()
         #loss = loss_fn(network_output, y.argmax(1)) # Nllloss()
+        loss = loss_fn(network_output, targets) # Nllloss()
         loss.backward()
         optimizer.step()
 
         # output and write metrics
-        predictions = network_output.argmax(1)
-        targets = y.argmax(1)
+        _, predictions = network_output.max(1)
         num_correct = (predictions == targets).sum()
         running_train_acc = float(num_correct)/float(x.shape[0])
         if i % 25 == 0:
@@ -128,15 +127,15 @@ if __name__=='__main__':
     else:
         print("no pretrained model found in directory")
     # -- train parameters
-    #loss_fn = nn.NLLLoss()
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.NLLLoss()
+    #loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), 
             lr=parameters['TRAIN_PARAM']['LEARNING_RATE'],
             weight_decay=parameters['TRAIN_PARAM']['WEIGHT_DECAY'])
     num_epochs = parameters['TRAIN_PARAM']['EPOCHS']
     # -- tensorboard
-    writer = SummaryWriter(parameters['TB_PATH'])
-    # --  train loop
+    writer = SummaryWriter(parameters['TB_PATH']+'/'+ str(round(datetime.now().timestamp())))
+    # --  train log
     train_step = 0
     test_step = 0
 

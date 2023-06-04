@@ -1,12 +1,12 @@
 
 #---- MODEL PARAMETERS
 MODEL_PARAM: # input in the same order as class initialization
-  BATCH_SIZE: 4
+  BATCH_SIZE: 20
   TIME_FRAMES: 20
   KEYPOINTS: 17
   CHANNEL_IN: 3
-  HEADS: 6
-  LAYERS: 4
+  HEADS: 3
+  LAYERS: 6
   LAST_MLP: 512
   CLASSES: 8
 
@@ -18,7 +18,7 @@ MODEL_OUT_PATH: '../weights/model.pth'
 
 #---- TRAINING PARAMETERS
 TRAIN_PARAM:
-  LEARNING_RATE: .001
+  LEARNING_RATE: .00025
   WEIGHT_DECAY: .0001
-  EPOCHS: 100
+  EPOCHS: 124
 

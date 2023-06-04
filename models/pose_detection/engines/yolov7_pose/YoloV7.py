@@ -21,6 +21,7 @@ class Engine():
         # -- set device
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
+            #self.device = torch.device('cpu')
         elif torch.backends.mps.is_available():
             self.device = torch.device('cpu') # there is a function in torchvision that is not yet supported: use cpu instead of mps
         else:
@@ -31,10 +32,14 @@ class Engine():
         self.download_model()
         weights = torch.load('/tmp/models/yolov7-w6-pose.pt', map_location=self.device)
         self.model = weights['model']
-        _ = self.model.float().eval()
-        #_ = self.model.half().eval()
+        #_ = self.model.float().eval()
+        _ = self.model.half().eval()
 
         self.threshold = 0.55
+
+    def share_memory(self):
+        self.model.share_memory()
+
     
     def download_model(self):
         model_path = "/tmp/models/yolov7-w6-pose.pt"
@@ -65,7 +70,8 @@ class Engine():
         source_img = torch.tensor(np.array([source_img.numpy()]))
 
         if torch.cuda.is_available(): 
-            resized_img = resized_img.cuda().to(self.device)
+            resized_img = resized_img.half().cuda().to(self.device)
+            #resized_img = resized_img.to(torch.float16).to(self.device)
         elif torch.backends.mps.is_available():
             resized_img = resized_img.to(self.device)
         else:

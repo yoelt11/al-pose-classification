@@ -14,7 +14,10 @@ class PoseDataset(Dataset):
         item = self.data[index]
         target = self.targets[index]
         x = torch.tensor(item)
-        y = torch.tensor(target)
+        if isinstance(target, str):
+            y = target
+        else:
+            y = torch.tensor(target)
 
         if self.transform is not None:
             x = self.transform(x)

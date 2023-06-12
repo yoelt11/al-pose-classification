@@ -1,7 +1,7 @@
 
 #---- MODEL PARAMETERS
 MODEL_PARAM: # input in the same order as class initialization
-  BATCH_SIZE: 20
+  BATCH_SIZE: 24
   TIME_FRAMES: 20
   KEYPOINTS: 17
   CHANNEL_IN: 3

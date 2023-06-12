@@ -6,7 +6,6 @@ import os
 import multiprocessing
 import sys
 import h5py
-import jsonlines as jsonl
 sys.path.append("../models/")
 sys.path.append( "../models/pose_detection/engines/yolov7_pose/")
 from pose_detection.engines import YoloV7 as PoseEngine

@@ -47,6 +47,9 @@ def extract_in_batches(files, buffer, event):
                     # -- read frame
                     ret, frame = cap.read()
                     if ret == True: # if frame reading succesful
+                        if frame.shape[0] > 365:
+                            print(f"frame shape: {frame.shape}")
+                            frame = cv2.resize(frame, (640,360  ))
                         keypoints_sequence.append(model.run(frame))
                         frame_sequence.append(frame)
                 # -- convert arrays to numpy
@@ -89,7 +92,8 @@ if __name__ == '__main__':
         print("Error: arg options are unlabeled_videos or videos2label")
 
     # --  set mp strategy
-    mp.set_start_method('fork')
+    if not torch.backends.mps.is_available():
+        mp.set_start_method('fork')
     # -- share items between threads 
     buffer = mp.Queue()
     # -- dataset container for items in queue

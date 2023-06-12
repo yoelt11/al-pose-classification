@@ -34,7 +34,11 @@ def loadDataset(batch_size, PATH):
     # -- create instance of dataset
     dataset = PoseDataset(data, targets, transform)
     
-    test_loader = DataLoader(dataset=dataset, batch_size=batch_size, pin_memory=True, num_workers=4, drop_last=True)
+    test_loader = DataLoader(dataset=dataset, 
+                             batch_size=batch_size, 
+                             pin_memory=True, 
+                             num_workers=0, 
+                             drop_last=True)
 
     labels = ['sitting', 'standing', 'drinking', 'waving', 'clapping', 'walking', 'picking', 'none']
 

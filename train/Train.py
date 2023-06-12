@@ -48,8 +48,8 @@ def loadDataset(batch_size, PATH):
     train_sampler = SubsetRandomSampler(train_idx)
     test_sampler = SubsetRandomSampler(test_idx)
     
-    train_loader = DataLoader(dataset=dataset, batch_size=batch_size, sampler=train_sampler, pin_memory=True, num_workers=4, drop_last=True)
-    test_loader = DataLoader(dataset=dataset, batch_size=batch_size, sampler=test_sampler, pin_memory=True, num_workers=4, drop_last=True)
+    train_loader = DataLoader(dataset=dataset, batch_size=batch_size, sampler=train_sampler, pin_memory=True, num_workers=0, drop_last=True)
+    test_loader = DataLoader(dataset=dataset, batch_size=batch_size, sampler=test_sampler, pin_memory=True, num_workers=0, drop_last=True)
 
     return train_loader, test_loader
 

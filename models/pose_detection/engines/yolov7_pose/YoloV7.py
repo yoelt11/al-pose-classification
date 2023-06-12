@@ -32,8 +32,11 @@ class Engine():
         self.download_model()
         weights = torch.load('/tmp/models/yolov7-w6-pose.pt', map_location=self.device)
         self.model = weights['model']
-        #_ = self.model.float().eval()
-        _ = self.model.half().eval()
+
+        if torch.backends.mps.is_available():
+            _ = self.model.float().eval()
+        else:
+            _ = self.model.half().eval()
 
         self.threshold = 0.55
 
@@ -97,7 +100,6 @@ class Engine():
             A function that returns both the keypoints and plotted image.
         '''
         # -- get image from queue
-        input_image = input_queue.get()
         if input_image.any() != None:
             # -- preprocess input
             resized_img, source_img = self._preprocessImage(input_image)
@@ -119,13 +121,11 @@ class Engine():
             src_h = source_img.shape[2]
             src_w = source_img.shape[3]
 
-            output[:,0] = ((output[:,0] / inf_w) * src_w) 
-            output[:,1] = ((output[:,1] / inf_h) * src_h) + offset_y
-
-
+            output[:,0] = (output[:,0] / inf_w) * src_w
+            output[:,1] = (((output[:,1] / inf_h) * src_h) + offset_y) #* src_h
             # -- plot keypoints to image
             nimg = self.plot(output, source_img)
-        return output, ref_image
+        return output, nimg
 
     def plot_thread_run(self, input_queue, response_queue, event):
         ''' 

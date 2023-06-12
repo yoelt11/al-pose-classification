@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # file_names = [merged_file_name[i] for i in range(len(merged_file_name))]
     # targets = [merged_targets[i] for i in range(merged_targets.shape[0])]
     dataset = [{
-                      'img_data': np.zeros([1,20,360,640,3]),
+                      'img_data': np.zeros([1,1,1,1]),
                       'kp_data': np.expand_dims(merged_data[i], axis=0),
                       'file_name': 'None',
                       'target': np.expand_dims(merged_targets[i], axis=0)

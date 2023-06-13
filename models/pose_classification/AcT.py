@@ -27,19 +27,23 @@ class AcT(nn.Module):
 			- d_mlp: as per paper this dimension depends on d_model
 			- X_pos = position embedding
 			"""
-	def __init__(self, B=40, T=5, N=17, C=3, nhead=1, num_layer=4, d_last_mlp=256, classes=20):
+	def __init__(self, B=40, T=5, N=17, C=3, nhead=1, num_layer=4, d_last_mlp=256, classes=20, device='cpu'):
 
 		super().__init__()
+        
+		# Device
+		self.device = torch.device(device)
 		
 		# Attributes
 		self.d_model = nhead * 64  # as per paper
 		self.d_mlp = self.d_model * 4  # as per paper
 		self.B = B
+		self.num_heads = nhead
 		
 		dropout = 0.0 # does not have a lot of impact in network
 
 		# Linear projection
-		self.linear_projection = LinearProjection(B,T,N,C,self.d_model)
+		self.linear_projection = LinearProjection(B,T,N,C,self.d_model, device)
 
 		# Encoder
 		encoder_layer = nn.TransformerEncoderLayer(d_model=self.d_model, dim_feedforward=self.d_mlp, nhead=nhead, dropout=dropout, norm_first=False, batch_first=True, activation="gelu")
@@ -64,16 +68,20 @@ class AcT(nn.Module):
 						nn.LogSoftmax(dim=1)
 						)
 
-	def generate_mask(self,X_in):
+	def generate_mask(self, X_in):
 		# Experimental random masking for the input of the encoder
-		B, T, D = X_in.shape
-		return torch.log((torch.Tensor(B*3, T, T).uniform_() > 0.05 ).float())
+		B, T, D, C= X_in.shape
+		return torch.log((torch.Tensor(21, 21).uniform_() > 0.05 ).float()).to(self.device)
 
 	def forward(self, X_in):
 		
 		lp = self.linear_projection(X_in) # [B, T+1, D_model]
 
-		enc_out = self.transformer_encoder(lp) # [B, T+1, D_model]
+		mask = self.generate_mask(X_in.clone().detach())
+		#print(mask.shape)
+
+		enc_out = self.transformer_encoder(lp, mask=mask) # [B, T+1, D_model]
+		print(enc_out.shape)
 
 		out =  self.mlp(enc_out[:, 0, :].squeeze())
 

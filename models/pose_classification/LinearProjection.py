@@ -22,10 +22,11 @@ class LinearProjection(nn.Module):
 			- x_cls = cls token [1,D]
 			- X_pos = position embedding
 			"""
-	def __init__(self, B=40, T=5, N=17, C=3, D_model=64):
+	def __init__(self, B=40, T=5, N=17, C=3, D_model=64, device="cpu"):
 
 		super().__init__()
 
+		self.device = torch.device(device)
 		self.bn = nn.BatchNorm1d(N * C).float()
 		self.W_lo = nn.Linear(N*C, D_model, bias=False)
 		self.x_cls = nn.Parameter(torch.randn([1, D_model]))
@@ -40,7 +41,7 @@ class LinearProjection(nn.Module):
 		# expanding x_bcls to adjust it to the batch size
 		x_bcls = self.x_cls.expand([B,-1,-1]) # out_dim = [B, 1, D_model]
 		
-		positions = torch.arange(start=0, end=T+1).int()
+		positions = torch.arange(start=0, end=T+1).int().to(self.device)
 		X_pos = self.embedding(positions) # out_dim = [B, T+1, D_model]
 		
 		X_lp = torch.cat([x_bcls, X_lo], 1) + X_pos  # out_dim = [B, T+1, D_model]

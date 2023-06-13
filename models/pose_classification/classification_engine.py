@@ -88,7 +88,7 @@ class Engine():
             # -- run pose detection
             #if i % self.frame_skip == 0:
             pose_output, im_wth_kp = self.pose_engine.plot_run(input_image)
-            pose_output = kp_norm(pose_output)
+            pose_output = kp_norm(torch.tensor(pose_output).to(self.device))
             # -- update queue
             self.update_pose_buffer(pose_output)
             # -- reset counter

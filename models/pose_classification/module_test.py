@@ -31,6 +31,13 @@ async def imageServer(websocket):
                         1.5,
                         (255,42,255), 
                         2)
+            print(response['history_based_class'])
+            cv2.putText(response['image_with_kp'], 
+                        response['history_based_class'][0], (10,80), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1.5,
+                        (255,42,56), 
+                        2)
             cv2.imshow("pose detection", response['image_with_kp'])
 
             if cv2.waitKey(1) & 0xFF == ord('q'):

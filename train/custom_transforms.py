@@ -15,11 +15,13 @@ def kp_norm(pose):
         body_coords = body_coords.T
         center_coord = body_coords.mean(1)
         nose_coord = pose[0, :2]
-        ref_dist = (center_coord - nose_coord).pow(2).sum(0).sqrt()
+        eye_coord = pose[1, :2]
+        ear_coord = pose[4, :2]
+        ref_dist = torch.linalg.norm((nose_coord - center_coord), dim=0, ord=2) 
     # -- normalize wrt center
         pose = pose.T
-        pose[0] = (pose[0] - center_coord[0]) * (ref_dist) #/ 640
-        pose[1] = (pose[1] - center_coord[1]) * (ref_dist) #/ 360
+        pose[0] = ((pose[0] - center_coord[0]) * (ref_dist)) 
+        pose[1] = ((pose[1] - center_coord[1]) * (ref_dist)) 
 
     return pose.T
     

@@ -18,7 +18,11 @@ from pose_detection.engines import YoloV7 as PoseEngine
 from pose_classification.AcT import AcT as ClassificationModel
 # -- kp normalization
 from custom_transforms import kp_norm
+from collections import deque
+from collections import Counter
 
+
+ 
 class Engine():
     def __init__(self):
         # -- set device
@@ -48,10 +52,20 @@ class Engine():
         self.classification_model.load_state_dict(weights)
         self.classification_model.to(self.device)
         self.classification_model.eval()
+        print(f"[Info] pose classification is in training mode: {self.classification_model.training} running on device: {self.device}")	
         # -- intialize pose buffer
-        self.pose_buffer = torch.zeros([20,17,3]).to(self.device)
+        self.pose_buffer = torch.zeros([self.T,N,C]).to(self.device)
         # -- frame skip
-        self.frame_skip = 1
+        self.frame_skip = 2
+        # -- detection threshold: if classification not confident enough return last confidence class
+        self.recognition_history =  deque()
+        for i in range(5):
+            self.recognition_history.append(None)
+        self.label_history = np.array(["none" for i in range(8)])
+        self.score_history = np.array([0.01 for i in range(8)])
+        # -- classification threshold
+        self.class_threshold = 0.90 # during model development set this to 0
+        #self.class_threshold = 0. # during model development set this to 0
         # -- set labels
         self.labels = ['sitting', 
                        'standing', 
@@ -61,7 +75,6 @@ class Engine():
                        'walking', 
                        'picking', 
                        'none']
-
 
     # The pose_classification config file: Must be same file the model was trained with
     def load_yaml(self, PATH='../../train/train_config.yaml'):
@@ -81,6 +94,7 @@ class Engine():
     
     # -- function to be ran in a seperate threads (works with queues)
     def run_as_thread(self, image_queue, output_queue, event):
+        #self.classification_model.eval()
         i = 0
         while True: 
             input_image = image_queue.get() # get image from queue
@@ -88,7 +102,10 @@ class Engine():
             # -- run pose detection
             #if i % self.frame_skip == 0:
             pose_output, im_wth_kp = self.pose_engine.plot_run(input_image)
-            pose_output = kp_norm(torch.tensor(pose_output).to(self.device))
+            if str(self.device) == "mps":
+                pose_output = kp_norm(torch.tensor(pose_output).half().to(self.device))
+            else:
+                pose_output = kp_norm(torch.tensor(pose_output).to(self.device))
             # -- update queue
             self.update_pose_buffer(pose_output)
             # -- reset counter
@@ -96,13 +113,33 @@ class Engine():
                 i = 0
             # -- run pose classification
             if i % self.frame_skip == 0:
-                self.classification_model.eval()
                 with torch.no_grad():
                     prediction = torch.exp(self.classification_model(self.pose_buffer.unsqueeze(0)))
+                    print(prediction)
                 # -- add prediction to queue
                 ordered_idx = torch.argsort(prediction, descending=True).tolist()
                 ordered_labels = [self.labels[i] for i in ordered_idx]
-            output_queue.put({'labels': ordered_labels, 'scores': prediction[ordered_idx].cpu().numpy(), 'image_with_kp': im_wth_kp})
+                ordered_scores = prediction[ordered_idx].cpu().numpy()
+                print("O: ", ordered_labels)
+                # -- apply threshold
+                # -- maybe this logic is better in client side (Java)
+                if ordered_scores[0] > self.class_threshold:
+                    self.label_history = ordered_labels
+                    self.score_history = ordered_scores
+                    self.recognition_history.popleft()
+                    self.recognition_history.append(ordered_labels[0])
+               # else:
+               #     prediction[7] = 0.999
+               #     ordered_idx = torch.argsort(prediction, descending=True).tolist()
+               #     ordered_labels = [self.labels[i] for i in ordered_idx]
+               #     ordered_scores = prediction[ordered_idx].cpu().numpy()
+               #     self.label_history = ordered_labels
+               #     self.score_history = ordered_scores
+               #     self.recognition_history.popleft()
+               #     self.recognition_history.append(ordered_labels[0])
+            # -- respond to queue
+            print("History Vote: ", Counter(self.recognition_history).most_common()[0])
+            output_queue.put({'labels': self.label_history, 'scores': self.score_history , 'image_with_kp': im_wth_kp, 'history_based_class': Counter(self.recognition_history).most_common()[0]})
             print("Engine Benchmark: ",  time.perf_counter() - time_start)
             print("")
             i += 1

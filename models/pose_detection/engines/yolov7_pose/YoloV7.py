@@ -83,7 +83,7 @@ class Engine():
         return resized_img, source_img
 
     def _interpret_output(self, output):
-        output = non_max_suppression_kpt(output, 0.05, 0.40, nc=self.model.yaml['nc'], nkpt=self.model.yaml['nkpt'], kpt_label=True)
+        output = non_max_suppression_kpt(output, 0.05, 0.10, nc=self.model.yaml['nc'], nkpt=self.model.yaml['nkpt'], kpt_label=True)
         with torch.no_grad():
             output = output_to_keypoint(output)
         return output
@@ -205,8 +205,8 @@ class Engine():
             src_h = source_img.shape[2]
             src_w = source_img.shape[3]
 
-            output[:,0] = (output[:,0] / inf_w) 
-            output[:,1] = (((output[:,1] / inf_h) * src_h) + offset_y) / src_h
+            output[:,0] = (output[:,0] / src_w) 
+            output[:,1] = (output[:,1] / src_h)  #* src_h) + offset_y) / src_h
 
         return output
 

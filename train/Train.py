@@ -26,7 +26,7 @@ def load_yaml(PATH='./train_config.yaml'):
     
     return dictionary 
 
-def loadDataset(batch_size, PATH):
+def loadDataset(batch_size, time_frames, PATH):
     # -- load your custom dataset from the .jsonl file
     dataset_props, _, data, _, targets = load_from_hdf5(PATH)
     # -- load dataset properties
@@ -36,7 +36,7 @@ def loadDataset(batch_size, PATH):
     # -- define transformations
     transform = kp_norm
     # -- create instance of dataset
-    dataset = PoseDataset(data, targets, transform)
+    dataset = PoseDataset(data, targets, time_frames, transform)
     # -- split into train / test
     train_proportion = 0.8
     test_proportion = 1 - train_proportion
@@ -62,6 +62,7 @@ def evaluate(loader, model, batch_size, step, writer):
         with torch.no_grad():
             for x, y in loader:
                 network_output = model(x)
+                print(network_output)
                 # set y values between 0 and 1
                 predictions = network_output.argmax(1)
                 targets = y.argmax(1)
@@ -79,6 +80,7 @@ def evaluate(loader, model, batch_size, step, writer):
 
 def train(loader, model, batch_size, step, writer):
     model.train() # sets model to training mode
+    #model.mlp.requires_grad_(False)
 
     for i, (x, y) in enumerate(loader):
 
@@ -117,7 +119,7 @@ if __name__=='__main__':
     parameters = load_yaml()
     batch_size, T, N, C, nhead, num_layer, d_last_mlp, classes = list(parameters['MODEL_PARAM'].values())
     # -- load dataset
-    train_loader, test_loader = loadDataset(batch_size, PATH=parameters['DS_PATH'] + dataset_path)
+    train_loader, test_loader = loadDataset(batch_size, T, PATH=parameters['DS_PATH'] + dataset_path)
     #-- load model
     model = ClassificationModel(B=batch_size, T=T, N=N, C=C, nhead=nhead, num_layer=num_layer, d_last_mlp=d_last_mlp, classes=classes)
     if os.path.isfile("../weights/model.pth"):
@@ -147,6 +149,7 @@ if __name__=='__main__':
         test_step, writer = evaluate(test_loader, model, batch_size, test_step, writer)
         # -- save every 20 epochs
         if epoch % 20 == 0:
+            print("[INFO] -- Saving checkpoint --")
             torch.save(model.state_dict(), parameters['MODEL_OUT_PATH'])
     
     torch.save(model.state_dict(), parameters['MODEL_OUT_PATH'])

@@ -30,7 +30,8 @@ class AcT(nn.Module):
 	def __init__(self, B=40, T=5, N=17, C=3, nhead=1, num_layer=4, d_last_mlp=256, classes=20, device='cpu'):
 
 		super().__init__()
-        
+		#print(f"[Info] pose classification is in training mode: {self.training} running on device: {device}")	
+
 		# Device
 		self.device = torch.device(device)
 		
@@ -71,18 +72,18 @@ class AcT(nn.Module):
 	def generate_mask(self, X_in):
 		# Experimental random masking for the input of the encoder
 		B, T, D, C= X_in.shape
-		return torch.log((torch.Tensor(21, 21).uniform_() > 0.05 ).float()).to(self.device)
+		mask = torch.FloatTensor(T + 1, T + 1).uniform_() > 0.8
+		return mask.to(self.device)
 
 	def forward(self, X_in):
-		
+		# -- linear projection	
 		lp = self.linear_projection(X_in) # [B, T+1, D_model]
-
-		mask = self.generate_mask(X_in.clone().detach())
-		#print(mask.shape)
-
-		enc_out = self.transformer_encoder(lp, mask=mask) # [B, T+1, D_model]
-		print(enc_out.shape)
-
+		# -- apply mask if training
+		if self.training:
+			mask = self.generate_mask(X_in.clone().detach())
+			enc_out = self.transformer_encoder(lp, mask=mask) # [B, T+1, D_model]
+		else:
+			enc_out = self.transformer_encoder(lp) # [B, T+1, D_model]
 		out =  self.mlp(enc_out[:, 0, :].squeeze())
 
 		return out

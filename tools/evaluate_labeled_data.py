@@ -22,7 +22,7 @@ def load_yaml(PATH='../train/train_config.yaml'):
     
     return dictionary 
 
-def loadDataset(batch_size, PATH):
+def loadDataset(batch_size, time_frames, PATH):
     # -- load your custom dataset from the .jsonl file
     dataset_props, _, data, _, targets = load_from_hdf5(PATH)
     # -- load dataset properties
@@ -32,7 +32,7 @@ def loadDataset(batch_size, PATH):
     # -- define transformations
     transform = kp_norm
     # -- create instance of dataset
-    dataset = PoseDataset(data, targets, transform)
+    dataset = PoseDataset(data, targets, time_frames, transform)
     
     test_loader = DataLoader(dataset=dataset, 
                              batch_size=batch_size, 
@@ -49,6 +49,7 @@ def evaluate(loader, model):
     total = torch.zeros(8)
     with torch.no_grad():
         for x, y in loader:
+            print(x.shape)
             network_output = model(x)
             # set y values between 0 and 1
             predictions = network_output.argmax().item()
@@ -90,7 +91,7 @@ if __name__=="__main__":
     batch_size, T, N, C, nhead, num_layer, d_last_mlp, classes = list(parameters['MODEL_PARAM'].values())
     batch_size = 1 # process one item at a time
     # -- load dataset
-    test_loader, labels = loadDataset(batch_size, PATH=parameters['DS_PATH'] + file_path)
+    test_loader, labels = loadDataset(batch_size, T, PATH=parameters['DS_PATH'] + file_path)
     # -- load model
     model = ClassificationModel(B=batch_size, T=T, N=N, C=C, nhead=nhead, num_layer=num_layer, d_last_mlp=d_last_mlp, classes=classes)
     if os.path.isfile("../weights/model.pth"):

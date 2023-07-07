@@ -45,8 +45,8 @@ class Engine():
 
     
     def download_model(self):
-        model_path = "/tmp/models/yolov7-w6-pose.pt"
-        dir = "/tmp/models/"
+        model_path = "/tmp/models/pose_class/yolov7-w6-pose.pt"
+        dir = "/tmp/models/pose_class/"
 
         if not os.path.exists(dir):
             # -- create folder

@@ -109,7 +109,7 @@ if __name__ == '__main__':
         # -- output file
         output_dir = "./datasets/unlabeled_datasets/" + folder_src + str(round(datetime.now().timestamp())) 
         # -- frames to extract
-        total_frames = 5 
+        total_frames = 20 
         # -- the dictionary
         entries = {"video_name": "", "data": 0}
         # -- create mutiprocessing pool

@@ -56,15 +56,15 @@ class Engine():
         # -- intialize pose buffer
         self.pose_buffer = torch.zeros([self.T,N,C]).to(self.device)
         # -- frame skip
-        self.frame_skip = 2
+        self.frame_skip = 1
         # -- detection threshold: if classification not confident enough return last confidence class
         self.recognition_history =  deque()
         for i in range(5):
             self.recognition_history.append(None)
         self.label_history = np.array(["none" for i in range(8)])
-        self.score_history = np.array([0.01 for i in range(8)])
+        self.score_history = np.zeros(8)
         # -- classification threshold
-        self.class_threshold = 0.90 # during model development set this to 0
+        self.class_threshold = 0.0 # during model development set this to 0
         #self.class_threshold = 0. # during model development set this to 0
         # -- set labels
         self.labels = ['sitting', 

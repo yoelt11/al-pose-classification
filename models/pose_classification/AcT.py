@@ -68,7 +68,10 @@ class AcT(nn.Module):
 						nn.Linear(d_last_mlp, classes),
 						nn.LogSoftmax(dim=1)
 						)
-
+			
+	def info(self):
+		print(f"[INFO][PoseClassification] is in training mode: {self.training} running on device: {self.device}")	
+	
 	def generate_mask(self, X_in):
 		# Experimental random masking for the input of the encoder
 		B, T, D, C= X_in.shape

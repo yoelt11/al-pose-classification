@@ -62,7 +62,6 @@ def evaluate(loader, model, batch_size, step, writer):
         with torch.no_grad():
             for x, y in loader:
                 network_output = model(x)
-                print(network_output)
                 # set y values between 0 and 1
                 predictions = network_output.argmax(1)
                 targets = y.argmax(1)
